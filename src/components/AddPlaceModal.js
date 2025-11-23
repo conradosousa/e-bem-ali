@@ -1,7 +1,6 @@
 // src/components/AddPlaceModal.js
-import React, { useState } from "react";
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from "react-native";
-import { Picker } from "@react-native-picker/picker"; // se não tiver, use um select simples ou substitua
+import { useState } from "react";
+import { ActivityIndicator, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { addPlace } from "../services/placesService";
 
 export default function AddPlaceModal({ visible, onClose, userLocation, onSaved }) {
@@ -9,17 +8,27 @@ export default function AddPlaceModal({ visible, onClose, userLocation, onSaved 
   const [type, setType] = useState("borracharia");
   const [note, setNote] = useState("");
 
+  const [saving, setSaving] = useState(false);
+
   const handleSave = async () => {
     if (!name.trim()) return alert("Informe o nome do local");
-    await addPlace({
-      name: name.trim(),
-      type,
-      latitude: userLocation.latitude,
-      longitude: userLocation.longitude,
-      note
-    });
-    setName(""); setNote(""); setType("borracharia");
-    onSaved && onSaved();
+    try {
+      setSaving(true);
+      await addPlace({
+        name: name.trim(),
+        type,
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        note
+      });
+      setName(""); setNote(""); setType("borracharia");
+      onSaved && onSaved();
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao salvar o local. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -46,7 +55,9 @@ export default function AddPlaceModal({ visible, onClose, userLocation, onSaved 
           <TextInput placeholder="Observação (opcional)" value={note} onChangeText={setNote} style={[styles.input, {height:80}]} multiline />
           <View style={styles.actions}>
             <TouchableOpacity style={styles.cancelBtn} onPress={onClose}><Text>Cancelar</Text></TouchableOpacity>
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSave}><Text style={{color:'#fff'}}>Salvar</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
+              {saving ? <ActivityIndicator color="#fff" /> : <Text style={{color:'#fff'}}>Salvar</Text>}
+            </TouchableOpacity>
           </View>
         </View>
       </View>

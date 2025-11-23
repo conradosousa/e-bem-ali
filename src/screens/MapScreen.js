@@ -1,8 +1,8 @@
 // src/screens/MapScreen.js
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
-import MapView, { Marker, UrlTile } from "react-native-maps";
 import * as Location from "expo-location";
+import { useEffect, useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import MapView, { Marker, UrlTile } from "react-native-maps";
 import AddPlaceModal from "../components/AddPlaceModal";
 import { getAllPlaces } from "../services/placesService";
 import categories from "../utils/categories";
@@ -43,7 +43,7 @@ export default function MapScreen() {
 
   return (
     <View style={styles.container}>
-      <MapView style={styles.map} region={region}>
+      <MapView style={styles.map} initialRegion={region}>
         <UrlTile urlTemplate="https://a.tile.openstreetmap.org/{z}/{x}/{y}.png" maximumZ={19} />
         <Marker coordinate={{ latitude: region.latitude, longitude: region.longitude }} title="Você" />
         {places.map(p => (

@@ -1,5 +1,5 @@
 // src/services/placesService.js
-import { collection, addDoc, getDocs, query, orderBy } from "firebase/firestore";
+import { addDoc, collection, getDocs, orderBy, query, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 
 const placesCol = collection(db, "places");
@@ -11,7 +11,7 @@ export async function addPlace({ name, type, latitude, longitude, note }) {
     latitude,
     longitude,
     note: note || "",
-    createdAt: new Date(),
+    createdAt: serverTimestamp(),
     confirms: 0
   });
 }
@@ -19,5 +19,12 @@ export async function addPlace({ name, type, latitude, longitude, note }) {
 export async function getAllPlaces() {
   const q = query(placesCol, orderBy("createdAt", "desc"));
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return snap.docs.map(d => {
+    const data = d.data();
+    // Converter Firestore Timestamp para Date, se aplicável
+    const createdAt = data.createdAt && typeof data.createdAt.toDate === 'function'
+      ? data.createdAt.toDate()
+      : data.createdAt;
+    return { id: d.id, ...data, createdAt };
+  });
 }
