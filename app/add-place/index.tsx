@@ -1,55 +1,44 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { router } from "expo-router";
 import * as Location from "expo-location";
+import { addDoc, collection } from "firebase/firestore";
 import { db } from "../../src/services/firebaseConfig";
-import { collection, addDoc } from "firebase/firestore";
-import { useRouter } from "expo-router";
 
 export default function AddPlace() {
-    const router = useRouter();
     const [name, setName] = useState("");
-    const [type, setType] = useState("");
-    const [coords, setCoords] = useState<any>(null);
+    const [selectedType, setSelectedType] = useState("Borracharia");
+    const [note, setNote] = useState("");
 
-    useEffect(() => {
-        (async () => {
-            let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== "granted") {
-                Alert.alert("Permissão negada!", "Ative a localização para continuar.");
-                return;
-            }
-
-            const current = await Location.getCurrentPositionAsync({});
-            setCoords(current.coords);
-        })();
-    }, []);
-
-    async function handleSave() {
-        if (!name || !type) {
-            Alert.alert("Erro", "Preencha todos os campos.");
-            return;
-        }
-
-        if (!coords) {
-            Alert.alert("Erro", "Localização ainda não carregou.");
+    async function savePlace() {
+        if (!name.trim()) {
+            Alert.alert("Erro", "Digite o nome do local.");
             return;
         }
 
         try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== "granted") {
+                Alert.alert("Permissão negada", "Você precisa permitir acesso à localização.");
+                return;
+            }
+
+            const loc = await Location.getCurrentPositionAsync({});
+
             await addDoc(collection(db, "places"), {
                 name,
-                type,
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-                createdAt: new Date(),
+                type: selectedType,
+                note,
+                latitude: loc.coords.latitude,
+                longitude: loc.coords.longitude,
+                createdAt: Date.now(),
             });
 
-            Alert.alert("Sucesso", "Local adicionado!");
-            router.push("/map");
-
+            Alert.alert("Sucesso", "Local cadastrado com sucesso!");
+            router.push("/places");
         } catch (error) {
             console.log(error);
-            Alert.alert("Erro", "Não foi possível salvar.");
+            Alert.alert("Erro", "Não foi possível salvar o local.");
         }
     }
 
@@ -58,48 +47,98 @@ export default function AddPlace() {
             <Text style={styles.title}>Adicionar Local</Text>
 
             <TextInput
-                placeholder="Nome do local (ex: Borracharia do Zé)"
+                placeholder="Nome"
                 style={styles.input}
                 value={name}
                 onChangeText={setName}
             />
 
+            <View style={styles.typeContainer}>
+                {["Borracharia", "Oficina", "Posto", "Guincho"].map((t) => (
+                    <TouchableOpacity
+                        key={t}
+                        style={[
+                            styles.typeButton,
+                            selectedType === t && styles.typeSelected,
+                        ]}
+                        onPress={() => setSelectedType(t)}
+                    >
+                        <Text
+                            style={[
+                                styles.typeButtonText,
+                                selectedType === t && { color: "#000" },
+                            ]}
+                        >
+                            {t}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+
             <TextInput
-                placeholder="Tipo (borracharia, oficina, posto...)"
-                style={styles.input}
-                value={type}
-                onChangeText={setType}
+                placeholder="Observação (opcional)"
+                style={[styles.input, { height: 120 }]}
+                multiline
+                value={note}
+                onChangeText={setNote}
             />
 
-            <TouchableOpacity style={styles.button} onPress={handleSave}>
-                <Text style={styles.buttonText}>Salvar Local</Text>
-            </TouchableOpacity>
+            <View style={styles.buttonsRow}>
+                <TouchableOpacity style={styles.btnCancel} onPress={() => router.back()}>
+                    <Text style={{ color: "#000" }}>Cancelar</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.btnSave} onPress={savePlace}>
+                    <Text style={{ color: "#fff", fontWeight: "bold" }}>Salvar</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 20, paddingTop: 60 },
-    title: { fontSize: 28, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
+    container: { flex: 1, padding: 20, backgroundColor: "#f5f5f5" },
+    title: { fontSize: 28, fontWeight: "bold", textAlign: "center", marginBottom: 20 },
     input: {
-        height: 55,
-        borderWidth: 1,
-        borderColor: "#ccc",
-        borderRadius: 10,
-        paddingHorizontal: 15,
-        marginBottom: 15,
-        fontSize: 16,
-    },
-    button: {
-        backgroundColor: "#0ea5e9",
+        backgroundColor: "#fff",
         padding: 15,
         borderRadius: 10,
-        marginTop: 10
+        fontSize: 16,
+        marginBottom: 15,
     },
-    buttonText: {
-        color: "#fff",
-        textAlign: "center",
-        fontSize: 18,
-        fontWeight: "bold"
-    }
+    typeContainer: {
+        flexDirection: "row",
+        gap: 10,
+        marginBottom: 20,
+    },
+    typeButton: {
+        flex: 1,
+        paddingVertical: 10,
+        backgroundColor: "#fff",
+        borderRadius: 10,
+        alignItems: "center",
+    },
+    typeSelected: { backgroundColor: "#d9f3ff" },
+    typeButtonText: { color: "#333" },
+    buttonsRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginTop: 10,
+    },
+    btnCancel: {
+        flex: 1,
+        backgroundColor: "#e6e6e6",
+        padding: 15,
+        borderRadius: 10,
+        alignItems: "center",
+        marginRight: 10,
+    },
+    btnSave: {
+        flex: 1,
+        backgroundColor: "#007bff",
+        padding: 15,
+        borderRadius: 10,
+        alignItems: "center",
+        marginLeft: 10,
+    },
 });

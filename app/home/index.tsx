@@ -1,18 +1,16 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { useRouter } from "expo-router";
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { router } from "expo-router";
 
-export default function Home() {
-  const router = useRouter();
-
+export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>É Bem Ali</Text>
-      <Text style={styles.subtitle}>Soluções rápidas para condutores 🚗🏍️</Text>
+      <Text style={styles.subtitle}>
+        Soluções rápidas para condutores 🚗🏍️
+      </Text>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => router.push("/map")}
-      >
+      <TouchableOpacity style={styles.button} onPress={() => router.push("/map")}>
         <Text style={styles.buttonText}>Abrir Mapa</Text>
       </TouchableOpacity>
     </View>
@@ -20,18 +18,35 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
-  title: { fontSize: 32, fontWeight: 'bold' },
-  subtitle: { fontSize: 16, marginTop: 10, marginBottom: 40 },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 34,
+    fontWeight: "bold",
+    color: "#222",
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#555",
+    marginBottom: 30,
+    textAlign: "center",
+  },
   button: {
-    backgroundColor: "#0ea5e9",
-    paddingVertical: 15,
-    paddingHorizontal: 25,
-    borderRadius: 10,
+    backgroundColor: "#007AFF",
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    elevation: 3,
   },
   buttonText: {
-    color: "#fff",
+    color: "#FFF",
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "600",
   },
 });
